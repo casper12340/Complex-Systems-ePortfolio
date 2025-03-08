@@ -1,0 +1,85 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+```{r}
+library(datasets)
+library(Hmisc)
+library(grid)
+library(ggplot2)
+```
+
+
+```{r}
+df <- read.csv('stock_details_5_years.csv')
+
+df_googl <- df[df$Company == "GOOGL", ]
+df_googl
+
+
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+```{r}
+ts.plot(df_googl$Open, xlab="Time", ylab = 'Googl Opening Prices')
+```
+
+
+```{r}
+df_googl$Open_lag1 <- lag(df_googl$Open,1)
+df_googl$Open_lead1 <- lag(df_googl$Open,-1)
+df_googl$Open_change <- (df_googl$Open_lead1 - df_googl$Open_lag1)/2
+
+plot(df_googl$Open_change,type='l', xlab = "Time in 10 min increments", ylab =" Change in Body Temp")
+```
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+```{r}
+plot(density(diff(df_googl$Open, lag = 1, differences = 1)))
+
+```
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+
+```{r}
+Open_diff <- diff(df_googl$Open, lag = 1)
+
+
+plot(Open_diff, xlab = "Time in days", ylab ="Change in Opening Price")
+
+```
+Around day 800 something happens, after which the data is more spread out than in the beginning.
+
+```{r}
+
+ggplot(data=df_googl,aes(x=Date,y=Open))+
+  geom_segment(aes(xend=Date,yend=Open+Open_diff),arrow=arrow(length=unit(.2,"cm")))+
+  ##stat_density2d(aes(colour=..level..))+
+  labs(list(title="Beaver 2 Vector Density Plot", x= "Time", y = "Temperature (C)"))
+```
+```{r}
+## TEST DATA
+
+Open_diff2 <- append(Open_diff, 0)
+
+length(Open_diff2)
+
+openLM <- lm(Open_diff2~Open, data=df_googl)
+summary(openLM)
+```
+
+```{r}
+plot(openLM)
+```
+
+```{r}
+hmd<-density(diff(ts(df_googl$Open)))
+plot(hmd)
+```
+
