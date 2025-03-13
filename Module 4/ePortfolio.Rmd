@@ -110,3 +110,35 @@ plot(openLM)
 
 
 
+```{r}
+# Load necessary libraries
+library(rgl)  # For interactive 3D plotting
+library(nonlinearTseries)  # Better package for time series embedding
+
+  
+
+embedding_dim <- 3 
+time_lag <- 1    
+
+embedded_googl <- buildTakens(df_googl$Open, embedding.dim = embedding_dim, time.lag = time_lag)
+
+plot3d(embedded_googl[, 1], embedded_googl[, 2], embedded_googl[, 3], 
+       col = "blue", size = 3, xlab = "x(t)", ylab = "x(t+τ)", zlab = "x(t+2τ)", 
+       main = "GOOGL Attractor in 3D")
+# Convert to an interactive HTML widget
+rgl_widget <- rglwidget()
+
+# Save the widget to an HTML file
+htmlwidgets::saveWidget(rgl_widget, "googl_attractor.html")
+
+```
+
+```{r}
+library(nonlinearTseries)
+
+fnn_result <- false.nearest(df_googl$Open, m = 5, d=7, t=1)
+print(fnn_result)
+
+#RESULTS SHOW THAT EMBEDDING DIMENSION OF 3 IS BEST!
+```
+
