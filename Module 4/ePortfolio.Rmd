@@ -32,7 +32,7 @@ ts.plot(df_googl$Open, xlab="Time", ylab = 'Googl Opening Prices')
 
 Open_diff <- diff(df_googl$Open, lag = 1)
 
-plot(Open_diff, type='l', xlab = "Time in 10 min increments", 
+plot(Open_diff, type='l', xlab = "Time in day increments", 
      ylab ="Change in Opening Price", 
      main = "Average Change in Open Price Over Time")
 
@@ -53,10 +53,8 @@ abline(v = mean_diff, col = "red", lwd = 2, lty = 2)
 ```
 ```{r}
 
-# Compute first differences
 diff_open <- diff(df_googl$Open, lag = 1, differences = 1)
 
-# Calculate statistics
 mean_diff <- mean(diff_open, na.rm = TRUE)
 sd_diff <- sd(diff_open, na.rm = TRUE)
 min_diff <- min(diff_open, na.rm = TRUE)
@@ -65,7 +63,6 @@ skewness_diff <- skewness(diff_open, na.rm = TRUE)
 kurtosis_diff <- kurtosis(diff_open, na.rm = TRUE)
 quantiles_diff <- quantile(diff_open, probs = c(0.25, 0.5, 0.75), na.rm = TRUE)
 
-# Print results
 list(
   Mean = mean_diff,
   Std_Dev = sd_diff,

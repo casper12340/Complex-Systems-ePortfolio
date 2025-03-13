@@ -77,6 +77,11 @@ main.portfolio-summary {
     margin: 0;
 }
 
+.module-body{
+    width:80%;
+    margin: auto;
+}
+
 .portfolio-item p {
     padding: 0 10px 10px;
 }
