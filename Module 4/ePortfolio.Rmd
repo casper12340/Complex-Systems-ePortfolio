@@ -5,12 +5,14 @@ output: html_notebook
 
 
 ```{r}
-library(datasets)
 library(Hmisc)
 library(grid)
 library(ggplot2)
 library(moments)
 library(e1071)
+library(rgl)
+library(nonlinearTseries)
+library(lubridate)
 ```
 
 
@@ -24,7 +26,7 @@ df_googl
 ```
 
 ```{r}
-ts.plot(df_googl$Open, xlab="Time", ylab = 'Googl Opening Prices')
+ts.plot(df_googl$Open, xlab="Time", ylab = 'Googl Opening Prices', main = "Googl Opening Prices over Time")
 ```
 
 
@@ -79,8 +81,6 @@ list(
 Around day 800 something happens, after which the data is more spread out than in the beginning.
 
 ```{r}
-library(lubridate)
-
 df_googl$Date2 <- ymd_hms(df_googl$Date)  # Convert to POSIXct
 
 ggplot(data=df_googl,aes(x=Date2,y=Open))+
@@ -95,8 +95,6 @@ ggplot(data=df_googl,aes(x=Date2,y=Open))+
 ```
 
 ```{r}
-## TEST DATA
-
 Open_diff2 <- append(Open_diff, 0)
 length(Open_diff2)
 
@@ -111,12 +109,6 @@ plot(openLM)
 
 
 ```{r}
-# Load necessary libraries
-library(rgl)  # For interactive 3D plotting
-library(nonlinearTseries)  # Better package for time series embedding
-
-  
-
 embedding_dim <- 3 
 time_lag <- 1    
 
@@ -125,17 +117,13 @@ embedded_googl <- buildTakens(df_googl$Open, embedding.dim = embedding_dim, time
 plot3d(embedded_googl[, 1], embedded_googl[, 2], embedded_googl[, 3], 
        col = "blue", size = 3, xlab = "x(t)", ylab = "x(t+τ)", zlab = "x(t+2τ)", 
        main = "GOOGL Attractor in 3D")
-# Convert to an interactive HTML widget
-rgl_widget <- rglwidget()
 
-# Save the widget to an HTML file
+rgl_widget <- rglwidget()
 htmlwidgets::saveWidget(rgl_widget, "googl_attractor.html")
 
 ```
 
 ```{r}
-library(nonlinearTseries)
-
 fnn_result <- false.nearest(df_googl$Open, m = 5, d=7, t=1)
 print(fnn_result)
 
