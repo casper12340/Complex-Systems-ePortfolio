@@ -30,6 +30,8 @@ nav {
 nav ul {
     list-style-type: none;
     padding: 0;
+    width: 73%;
+    margin: 0 auto; /* Centers the navigation */
 }
 
 nav ul li {
@@ -106,4 +108,18 @@ footer {
         display: block;
         margin: 5px 0;
     }
+}
+
+
+.dataset-description {
+    width: 70%;
+    padding: 20px;
+    margin: 20px auto;
+    border-radius: 10px;
+    background-color: #fefefe;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.dataset-description h2 {
+    margin-top: 0px;
+    margin-bottom: 0px;
 }
