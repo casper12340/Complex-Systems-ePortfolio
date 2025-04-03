@@ -123,3 +123,47 @@ footer {
     margin-top: 0px;
     margin-bottom: 0px;
 }
+
+
+
+
+/* Comments */
+
+#comment-form {
+    display: flex;
+    flex-direction: column;
+    max-width: 500px;
+}
+
+#comment-form input, #comment-form textarea {
+    font-family: inherit; /* Inherits the font from the body */
+    font-size: inherit;
+    margin: 5px 0;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+#comment-form button {
+    background-color: #94618E;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#comment-form button:hover {
+    background-color: #49274A;
+}
+
+#comment-section {
+    margin-top: 20px;
+}
+
+.comment {
+    background: #f9f9f9;
+    padding: 10px;
+    margin-top: 5px;
+    border-radius: 5px;
+}
