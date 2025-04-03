@@ -129,10 +129,13 @@ footer {
 
 /* Comments */
 
+/* Comments */
+
 #comment-form {
     display: flex;
     flex-direction: column;
     max-width: 500px;
+    margin-bottom: 30px;
 }
 
 #comment-form input, #comment-form textarea {
@@ -164,6 +167,34 @@ footer {
 .comment {
     background: #f9f9f9;
     padding: 10px;
-    margin-top: 5px;
+    margin-top: 15px;
     border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+/* New styles for comment removal functionality */
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.comment-text {
+    margin-top: 5px;
+    white-space: pre-wrap;
+}
+
+.delete-comment {
+    background-color: #49274A; /* Using your darker purple color */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.delete-comment:hover {
+    background-color: #94618E; /* Using your lighter purple color */
 }
