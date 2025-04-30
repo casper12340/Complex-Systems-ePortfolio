@@ -1,0 +1,114 @@
+---
+title: "Module 7"
+output: html_document
+---
+```{r}
+
+```
+
+```{r}
+df <- read.csv('stock_details_5_years.csv')
+
+df_googl <- df[df$Company == "GOOGL", ]
+df_googl
+```
+
+```{r}
+# Plot the 'Open' prices
+plot(df_googl$Low, type = 'l', col = 'blue',
+     xlab = "Time", ylab = "Price", main = "Open and Close Prices")
+
+# Add the 'Close' prices to the same plot
+lines(df_googl$High, col = 'red')
+
+# Optionally, add a legend
+legend("topright", legend = c("Open", "Close"), col = c("blue", "red"), lty = 1)
+
+```
+```{r}
+low <- df_googl$Low[!is.na(df_googl$Low)]
+low.station <- (low - mean(low))/sd(low)
+plot(low.station,type='l', xlab = "Time", ylab="Smile Level")
+```
+
+```{r}
+low.SampEn <- pracma::sample_entropy(low.station, edim=2,r=0.2*sd(low.station),tau=1)
+print(low.SampEn)
+```
+```{r}
+set.seed(38472)
+# Create an example surrogate
+# Create 100 randomized surrogates, okay it really took too long, so I switched it to 20 for this example
+
+rand.surr.s1.joy.station.20 <- replicate(20, sample(low.station, replace=FALSE))
+
+# Now run SampEn on all the surrogates
+rand.surr.s1.joy.station.SampEn.20 <- apply(rand.surr.s1.joy.station.20, MARGIN=2, FUN = pracma::sample_entropy, edim=2,r=0.2*sd(rand.surr.s1.joy.station.20[,1]),tau=1)
+
+# Calculate mean
+mean <- mean(rand.surr.s1.joy.station.SampEn.20)
+
+# Calculate length
+n <- length(rand.surr.s1.joy.station.SampEn.20)
+
+# Calculate standard deviation
+sd <- sd(rand.surr.s1.joy.station.SampEn.20)
+
+# Calculate Standard Error
+error <- qt(.975 + (1 - .975)/2, df = n - 1) * sd/sqrt(n)
+
+# CI
+CI <- c(lower = mean - error, mean = mean, upper = mean + error)
+print(CI)
+```
+
+```{r}
+# These results show that there is a underlying pattern in the GooGl Low dataset that is gone when you randomly shuffle the data.
+```
+
+```{r}
+# Histogram of surrogate SampEn values
+hist(rand.surr.s1.joy.station.SampEn.20,
+     main = "Surrogate SampEn Distribution",
+     xlab = "Sample Entropy",
+     col = "lightgray",
+     border = "white")
+
+# Add vertical line for original SampEn
+#abline(v = low.SampEn, col = "red", lwd = 2)
+#legend("topright", legend = c("Original SampEn"), col = c("red"), lwd = 2)
+
+
+#The histogram shows that all surrogate SampEn values are much higher than your actual SampEn (0.125), providing strong evidence that your original time series contains real, non-random structure.
+```
+```{r}
+# Calculate p-value: proportion of surrogate SampEn values less than or equal to the observed value
+p_value <- mean(rand.surr.s1.joy.station.SampEn.20 <= low.SampEn)
+print(paste("p-value =", p_value))
+
+
+
+#P = 0 so this supports the hypothesis that the low signal is non-random, with structured, predictable dynamics. 
+```
+```{r}
+# Checks if all stock signals are equally structured
+
+# Repeat for another signal, say High prices
+high <- df_googl$High[!is.na(df_googl$High)]
+high.station <- (high - mean(high))/sd(high)
+high.SampEn <- pracma::sample_entropy(high.station, edim=2,r=0.2*sd(high.station),tau=1)
+
+print(high.SampEn)
+
+# Repeat for another signal, say High prices
+open <- df_googl$Open[!is.na(df_googl$Open)]
+open.station <- (open - mean(open))/sd(open)
+open.SampEn <- pracma::sample_entropy(open.station, edim=2,r=0.2*sd(open.station),tau=1)
+
+print(open.SampEn)
+
+
+#The values are below 1, which means that they are more regular, predicatble and potentially deterministic.
+#If the value is higher between 1.5 and 3, it is more random-like and has less structure.
+```
+

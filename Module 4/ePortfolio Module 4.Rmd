@@ -1,0 +1,215 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+```{r}
+options(rgl.useNULL = TRUE)
+library(rgl)
+
+library(Hmisc)
+library(grid)
+library(ggplot2)
+library(moments)
+library(e1071)
+library(rgl)
+library(nonlinearTseries)
+library(lubridate)
+library(tseriesChaos)
+
+```
+
+
+```{r}
+df <- read.csv('stock_details_5_years.csv')
+
+df_googl <- df[df$Company == "GOOGL", ]
+df_googl
+
+
+```
+
+```{r}
+ts.plot(df_googl$Open, xlab="Time", ylab = 'Googl Opening Prices', main = "Googl Opening Prices over Time")
+```
+
+
+```{r}
+
+Open_diff <- diff(df_googl$Open, lag = 1)
+
+plot(Open_diff, type='l', xlab = "Time in day increments", 
+     ylab ="Change in Opening Price", 
+     main = "Average Change in Open Price Over Time")
+
+```
+
+```{r}
+
+diff_open <- diff(df_googl$Open, lag = 1, differences = 1)
+
+mean_diff <- mean(diff_open, na.rm = TRUE)
+
+plot(density(diff_open, na.rm = TRUE), main = "Density of First Differences in Open Price", 
+     xlab = "First Differences", ylab = "Density")
+
+abline(v = mean_diff, col = "red", lwd = 2, lty = 2)
+
+
+```
+```{r}
+
+diff_open <- diff(df_googl$Open, lag = 1, differences = 1)
+
+mean_diff <- mean(diff_open, na.rm = TRUE)
+sd_diff <- sd(diff_open, na.rm = TRUE)
+min_diff <- min(diff_open, na.rm = TRUE)
+max_diff <- max(diff_open, na.rm = TRUE)
+skewness_diff <- skewness(diff_open, na.rm = TRUE)
+kurtosis_diff <- kurtosis(diff_open, na.rm = TRUE)
+quantiles_diff <- quantile(diff_open, probs = c(0.25, 0.5, 0.75), na.rm = TRUE)
+
+list(
+  Mean = mean_diff,
+  Std_Dev = sd_diff,
+  Min = min_diff,
+  Max = max_diff,
+  Skewness = skewness_diff,
+  Kurtosis = kurtosis_diff,
+  Quantiles = quantiles_diff
+)
+```
+
+
+
+Around day 800 something happens, after which the data is more spread out than in the beginning.
+
+```{r}
+df_googl$Date2 <- ymd_hms(df_googl$Date)  # Convert to POSIXct
+
+ggplot(data=df_googl,aes(x=Date2,y=Open))+
+  geom_segment(aes(xend=Date2,yend=Open+Open_diff),arrow=arrow(length=unit(.2,"cm")))+
+  stat_density2d(aes(colour=..level..))+
+    labs(
+    title = "GOOGL Opening Stock - 2D Vector Density Plot",
+    x = "Date",
+    y = "Opening Price",
+    colour = "Density Level"
+  )
+
+
+diff_open <- diff(df_googl$Open, lag = 1, differences = 1)
+
+#This Vector Density plot shows how the change in opening price relates to the closing price. 
+#It captures the daily change in Opening price
+
+#The plot shows a positive relation which indicates that days with higher opening prices generally tend to have higher closing prices. 
+#Upward arrows indicate days where the closing price was higher than the opening price. Close > Open. The length of this arrow represents the magnitude. 
+
+#Darker regions indicate price ranges where opening and closing prices occurred most. 
+#The lighter an area gets the less frequent the price is.
+ggplot(data=df_googl, aes(x=Close, y=Open)) +
+  geom_segment(aes(xend=Close, yend=Open + Open_diff), arrow=arrow(length=unit(.2, "cm"))) +
+  geom_errorbar(aes(ymin=Low, ymax=High), width=0.2) +
+  stat_density2d(aes(colour=..level..)) +
+  labs(
+    title = "GOOGL Stock Price Fluctuation",
+    x = "Closing Price",
+    y = "Opening Price",
+    colour = "Density Level"
+  )
+
+
+```
+
+```{r}
+Open_diff2 <- append(Open_diff, 0)
+length(Open_diff2)
+
+openLM <- lm(Open_diff2~Open, data=df_googl)
+summary(openLM)
+```
+
+```{r}
+plot(openLM)
+```
+
+
+
+```{r}
+embedding_dim <- 3 
+time_lag <- 1    
+
+embedded_googl <- buildTakens(df_googl$Open, embedding.dim = embedding_dim, time.lag = time_lag)
+
+plot3d(embedded_googl[, 1], embedded_googl[, 2], embedded_googl[, 3], 
+       col = "blue", size = 3, xlab = "x(t)", ylab = "x(t+τ)", zlab = "x(t+2τ)", 
+       main = "GOOGL Attractor in 3D")
+
+rgl_widget <- rglwidget()
+htmlwidgets::saveWidget(rgl_widget, "googl_attractor.html")
+
+```
+
+```{r}
+fnn_result <- false.nearest(df_googl$Open, m = 5, d=7, t=1)
+print(fnn_result)
+
+#RESULTS SHOW THAT EMBEDDING DIMENSION OF 3 IS BEST!
+```
+
+
+```{r}
+# Fixed R code for calculating Lyapunov exponents on Google stock data
+# Using existing df_googl$Open vector
+
+# Install and load required package if not already installed
+if (!require("nonlinearTseries")) {
+  install.packages("nonlinearTseries")
+  library(nonlinearTseries)
+}
+
+# Calculate Lyapunov exponent directly from the df_googl$Open data
+calculate_simple_lyapunov <- function(prices, embedding_dim = 3, time_delay = 1) {
+  # Convert prices to returns (percentage changes)
+  returns <- diff(log(prices)) * 100
+  
+  # Remove any NA values
+  returns <- returns[!is.na(returns)]
+  
+  # Create time series object
+  ts_returns <- ts(returns)
+  
+  # Calculate Lyapunov exponent with radius parameter
+  # The radius parameter determines the size of the neighborhood to be considered
+  # Setting it to NULL makes the function estimate it automatically based on the data
+  lyap_result <- maxLyapunov(time.series = ts_returns, 
+                            min.embedding.dim = embedding_dim, 
+                            max.embedding.dim = embedding_dim,
+                            time.lag = time_delay,
+                            radius = NULL,  # This will estimate the radius automatically
+                            do.plot = TRUE)
+  
+  # Extract Lyapunov exponent
+  lyap_exp <- mean(lyap_result$lyapunov)
+  
+  # Print results
+  cat("Lyapunov Exponent:", lyap_exp, "\n")
+  
+  if (lyap_exp > 0) {
+    cat("Interpretation: Chaotic behavior detected in the stock price movements.\n")
+  } else if (lyap_exp < 0) {
+    cat("Interpretation: The system is converging to a stable state.\n")
+  } else {
+    cat("Interpretation: The system is in a steady state.\n")
+  }
+  
+  return(lyap_result)
+}
+
+# One-line usage with your existing data
+lyap_result <- calculate_simple_lyapunov(df_googl$Open)
+
+```
+
