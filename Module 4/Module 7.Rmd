@@ -16,7 +16,7 @@ df_googl
 ```{r}
 # Plot the 'Open' prices
 plot(df_googl$Low, type = 'l', col = 'blue',
-     xlab = "Time", ylab = "Price", main = "Open and Close Prices")
+     xlab = "Time", ylab = "Price", main = "Low and High Prices")
 
 # Add the 'Close' prices to the same plot
 lines(df_googl$High, col = 'red')
@@ -28,7 +28,7 @@ legend("topright", legend = c("Open", "Close"), col = c("blue", "red"), lty = 1)
 ```{r}
 low <- df_googl$Low[!is.na(df_googl$Low)]
 low.station <- (low - mean(low))/sd(low)
-plot(low.station,type='l', xlab = "Time", ylab="Smile Level")
+plot(low.station,type='l', xlab = "Time", ylab="Low Level")
 ```
 
 ```{r}
@@ -63,7 +63,7 @@ print(CI)
 ```
 
 ```{r}
-# These results show that there is a underlying pattern in the GooGl Low dataset that is gone when you randomly shuffle the data.
+# These results show that there is an underlying pattern in the GooGl Low dataset that is gone when you randomly shuffle the data.
 ```
 
 ```{r}
@@ -110,5 +110,74 @@ print(open.SampEn)
 
 #The values are below 1, which means that they are more regular, predicatble and potentially deterministic.
 #If the value is higher between 1.5 and 3, it is more random-like and has less structure.
+```
+
+```{r}
+# AAFT surrogates - nonlinearity vs linear stochastic processes.
+library(nonlinearTseries)
+
+# Generate 20 AAFT surrogates
+aaft.surr <- t(FFTsurrogate(low.station, n.samples = 20))
+
+# Calculate SampEn for AAFT surrogates
+aaft.SampEn <- apply(aaft.surr, 2, function(x) pracma::sample_entropy(x, edim = 2, r = 0.2 * sd(x), tau = 1))
+
+# Confidence Interval
+aaft.mean <- mean(aaft.SampEn)
+aaft.sd <- sd(aaft.SampEn)
+aaft.n <- length(aaft.SampEn)
+aaft.error <- qt(0.975, df = aaft.n - 1) * aaft.sd / sqrt(aaft.n)
+aaft.CI <- c(lower = aaft.mean - aaft.error, mean = aaft.mean, upper = aaft.mean + aaft.error)
+print(aaft.CI)
+
+# Compare to original SampEn
+print(low.SampEn)
+
+aaft.p_value <- mean(aaft.SampEn <= low.SampEn)
+print(paste("AAFT p-value =", aaft.p_value))
+
+#The sample entropy doesn't fall within the 95% confidence interval so we have to reject the null hypothesis which states that the data is random. 
+```
+```{r}
+hist(rand.surr.s1.joy.station.SampEn.20, 
+     main = "SampEn: Random vs AAFT Surrogates",
+     xlab = "Sample Entropy", col = rgb(0.1, 0.1, 0.8, 0.5), 
+     border = "white", xlim = range(c(rand.surr.s1.joy.station.SampEn.20, aaft.SampEn)))
+
+hist(aaft.SampEn, col = rgb(0.8, 0.1, 0.1, 0.5), add = TRUE)
+
+abline(v = low.SampEn, col = "black", lwd = 2)
+legend("topright", legend = c("Random", "AAFT", "Original"),
+       fill = c(rgb(0.1,0.1,0.8,0.5), rgb(0.8,0.1,0.1,0.5), "black"))
+
+```
+```{r}
+analyze_signal <- function(signal, name="") {
+  signal <- signal[!is.na(signal)]
+  station <- (signal - mean(signal)) / sd(signal)
+  SampEn <- pracma::sample_entropy(station, edim=2, r=0.2*sd(station), tau=1)
+
+  # Random surrogate
+  rand.surr <- replicate(20, sample(station, replace=FALSE))
+  rand.SampEn <- apply(rand.surr, 2, function(x) pracma::sample_entropy(x, edim=2, r=0.2*sd(x), tau=1))
+  rand.CI <- quantile(rand.SampEn, probs = c(0.025, 0.5, 0.975))
+  rand.p <- mean(rand.SampEn <= SampEn)
+
+  # AAFT surrogate
+  aaft.surr <- t(FFTsurrogate(station, n.samples = 20))
+  aaft.SampEn <- apply(aaft.surr, 2, function(x) pracma::sample_entropy(x, edim=2, r=0.2*sd(x), tau=1))
+  aaft.CI <- quantile(aaft.SampEn, probs = c(0.025, 0.5, 0.975))
+  aaft.p <- mean(aaft.SampEn <= SampEn)
+
+  cat("\n", "----", name, "----", "\n")
+  cat("Observed SampEn:", SampEn, "\n")
+  cat("Random CI:", rand.CI, "| p-value =", rand.p, "\n")
+  cat("AAFT CI:", aaft.CI, "| p-value =", aaft.p, "\n")
+}
+analyze_signal(df_googl$Low, "Low")
+analyze_signal(df_googl$High, "High")
+analyze_signal(df_googl$Open, "Open")
+analyze_signal(df_googl$Close, "Close")
+
 ```
 
