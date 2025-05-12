@@ -1,0 +1,161 @@
+---
+title: "Module 7"
+output: html_document
+---
+```{r}
+library(nonlinearTseries)
+```
+
+```{r}
+df <- read.csv('stock_details_5_years.csv')
+
+df_googl <- df[df$Company == "GOOGL", ]
+df_googl
+```
+
+```{r}
+# Plot the Low prices
+plot(df_googl$Low, type = 'l', col = 'black',
+     xlab = "Time", ylab = "Price", main = "Low Prices")
+```
+```{r}
+low <- df_googl$Low[!is.na(df_googl$Low)]
+
+#Normalize the Low prices
+low.station <- (low - mean(low))/sd(low)
+plot(low.station,type='l', xlab = "Time", ylab="Low Level", main = "Low Prices Normalized")
+```
+
+```{r}
+#Compute the sample entropy
+low.SampEn <- pracma::sample_entropy(low.station, edim=8,r=0.2*sd(low.station),tau=1)
+print(low.SampEn)
+```
+```{r}
+
+fnn_result <- estimateEmbeddingDim(low.station, time.lag = 1, max.embedding.dim = 10)
+plot(fnn_result)
+
+```
+
+
+```{r}
+set.seed(123456)
+#Create 20 random surrogates
+n_surrogates <- 20
+random_surrogates <- replicate(n_surrogates, sample(low.station, replace=FALSE))
+
+# Compute the Sample Entropy of all surrogates
+sampen_values <- apply(random_surrogates, MARGIN=2, FUN = pracma::sample_entropy, edim=8,r=0.2*sd(random_surrogates[,1]),tau=1)
+print(sampen_values)
+print(any(is.na(sampen_values)))
+
+# Compute statistics
+mean <- mean(sampen_values,na.rm = TRUE)
+n <- length(sampen_values)
+sd <- sd(sampen_values)
+confidence_interval <- quantile(sampen_values, probs = c(0.025, 0.5, 0.975), na.rm = TRUE)
+
+print(confidence_interval)
+```
+
+
+```{r}
+# These results show that there is an underlying pattern in the GooGl Low dataset that is gone when you randomly shuffle the data.
+```
+
+```{r}
+# Histogram of surrogate SampEn values
+hist(sampen_values,
+     main = "Surrogate SampEn Distribution",
+     xlab = "Sample Entropy",
+     col = "lightgray",
+     border = "white")
+
+# The histogram cannot be computed as the values are Inf or NaN.
+```
+```{r}
+# Calculate p-value
+valid_sampens <- sampen_values[!is.na(sampen_values)]
+print(valid_sampens)
+p_value <- mean(valid_sampens <= low.SampEn)
+print(paste("p-value =", p_value))
+
+#P = 0 so this supports the hypothesis that the low signal is non-random, with structured, predictable dynamics. 
+```
+```{r}
+# Checks if all stock signals are equally structured
+
+# Repeat for another signal, say High prices
+high <- df_googl$High[!is.na(df_googl$High)]
+high.station <- (high - mean(high))/sd(high)
+high.SampEn <- pracma::sample_entropy(high.station, edim=2,r=0.2*sd(high.station),tau=1)
+
+print(high.SampEn)
+
+# Repeat for another signal, say High prices
+open <- df_googl$Open[!is.na(df_googl$Open)]
+open.station <- (open - mean(open))/sd(open)
+open.SampEn <- pracma::sample_entropy(open.station, edim=2,r=0.2*sd(open.station),tau=1)
+
+print(open.SampEn)
+
+
+#The values are below 1, which means that they are more regular, predicatble and potentially deterministic.
+#If the value is higher between 1.5 and 3, it is more random-like and has less structure.
+```
+
+```{r}
+set.seed(123456)
+n_surrogates <- 20
+# Generate 20 AAFT surrogates
+aaft_surrogates <- t(FFTsurrogate(low.station, n.samples = n_surrogates))
+
+# Calculate Sample Entropy for AAFT for edim = 8
+aaft_sampEn <- apply(aaft_surrogates, 2, function(x) pracma::sample_entropy(x, edim = 8, r = 0.2 * sd(x), tau = 1))
+
+# Compute statistics
+aaft_confidence_interval <- quantile(aaft_sampEn, probs = c(0.025, 0.5, 0.975), na.rm = TRUE)
+
+print(aaft_confidence_interval)
+
+# Compare to original Sample Entropy
+print(low.SampEn)
+
+aaft_p_value <- mean(aaft_sampEn <= low.SampEn)
+print(paste("AAFT p-value =", aaft_p_value))
+
+#The sample entropy doesn't fall within the 95% confidence interval so we have to reject the null hypothesis which states that the data is random. 
+
+```
+
+```{r}
+#Also check for other variables
+analyze_signal <- function(signal, name="") {
+  signal <- signal[!is.na(signal)]
+  station <- (signal - mean(signal)) / sd(signal)
+  SampEn <- pracma::sample_entropy(station, edim=8, r=0.2*sd(station), tau=1)
+
+  # Random surrogate
+  rand_surr <- replicate(20, sample(station, replace=FALSE))
+  rand_sampEn <- apply(rand_surr, 2, function(x) pracma::sample_entropy(x, edim=8, r=0.2*sd(x), tau=1))
+  rand_confidence_interval <- quantile(rand_sampEn, probs = c(0.025, 0.5, 0.975), na.rm = TRUE)
+  rand_p <- mean(rand_sampEn <= SampEn, na.rm = TRUE)
+
+  # AAFT surrogate
+  aaft_surr <- t(FFTsurrogate(station, n.samples = 20))
+  aaft_sampEn <- apply(aaft_surr, 2, function(x) pracma::sample_entropy(x, edim=8, r=0.2*sd(x), tau=1))
+  aaft_confidence_interval <- quantile(aaft_sampEn, probs = c(0.025, 0.5, 0.975), na.rm = TRUE)
+  aaft_p <- mean(aaft_sampEn <= SampEn, na.rm = TRUE)
+
+  cat("\n", "----", name, "----", "\n")
+  cat("Observed SampEn:", SampEn, "\n")
+  cat("Random CI:", rand_confidence_interval, "| p-value =", rand_p, "\n")
+  cat("AAFT CI:", aaft_confidence_interval, "| p-value =", aaft_p, "\n")
+}
+analyze_signal(df_googl$High, "High")
+analyze_signal(df_googl$Open, "Open")
+analyze_signal(df_googl$Close, "Close")
+
+```
+

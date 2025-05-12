@@ -1,0 +1,62 @@
+---
+title: "Module 11"
+output: html_document
+---
+```{r}
+system("which gfortran")
+install.packages("RcppArmadillo")
+install.packages("devtools")
+devtools::install_github("aaronlikens/fractalRegression")
+install.packages("fractalRegression")
+library(fractalRegression)
+```
+
+```{r}
+df <- read.csv('stock_details_5_years.csv')
+
+df_googl <- df[df$Company == "GOOGL", ]
+df_googl
+```
+
+```{r}
+plot(df_googl$Close, type = "l", lwd = 1, xlab = "Time", ylab = "Closing Price", main = "GOOGL Closing Price Time Series")
+```
+
+```{r}
+# Mean Center
+df_googl$Close_Cent <- as.numeric(scale(df_googl$Close, center = TRUE, scale = FALSE))
+
+# Fill in missing values
+df_googl$Close_Cent <- zoo::na.approx(df_googl$Close_Cent)
+
+# Make a plot
+plot(df_googl$Close_Cent, type="l", lwd=1,ylab="Closing Price", xlab="Time", main="GOOGL Closing Price Time Series Normalized")
+
+```
+```{r}
+scales <- logscale(scale_min = 16, scale_max = length(df_googl$Close_Cent)/4, scale_ratio = 2)
+```
+
+
+```{r}
+set.seed(33)
+
+# Create surrogates
+surr.list <- iaafft(df_googl$Close_Cent, N = 19)
+surr.mat <- do.call(cbind, surr.list)
+
+# Combine original and surrogates
+combined.mat <- cbind(df_googl$Close_Cent, surr.mat)
+
+# Run MFDFA
+mfdfa.combined <- mfdfa(
+  x = combined.mat,
+  scale = scales,
+  q = -10:10,
+  order = 1,
+  scale_ratio = 2
+)
+
+# Create surrogate bands
+mfdfa.plot(mfdfa.combined, do.surrogate = TRUE, nsurrogates = 19)
+```
