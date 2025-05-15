@@ -190,24 +190,25 @@
 </head>
 <body>
 <h1 id="sec:introduction">Introduction</h1>
-<h2 id="what-is-recurrence-and-rqa">What is recurrence and RQA?</h2>
-<p>Recurrence quantification analysis (RQA) is an assumption-free method
-for characterizing the repeating patterns and stability of a single time
-series by plotting its path against itself in phase space <span
-class="citation" data-cites="eckmann1987recurrence">(Eckmann, Kamphorst,
-and Ruelle 1987)</span>. Wherever the system revisits (or nearly
-revisits) the prior state, a point is marked on the recurrence plot. By
-quantifying these recurrences, RQA extracts metrics such as percent
-recurrence (%REC), determinism (%DET), longest diagonal line, and
-entropy, which together reveal the degree of regularity, predictability
-and complexity in the data <span class="citation"
-data-cites="zbilut1992embeddings">(Zbilut and Webber 1992)</span>.
-Applied to the financial dataset, where price dynamics repeatedly
-fluctuate through similar regimes (crashes and bull markets), RQA can
-highlight regime shifts and hidden structures in asset returns that
-traditional linear methods often miss <span class="citation"
-data-cites="fabretti2004recurrence">(Fabretti and Ausloos
-2004)</span>.</p>
+<p>In this module, emergence and self-organization is discussed in the
+context of complex systems, specifically in the context of the stock
+market of the last five years.</p>
+<h2 id="what-is-emergence-self-organization">What is emergence &amp;
+self organization?</h2>
+<p>Emergence is the concept of describing how a pattern property at
+system level appears and that it cannot be directly inferred from the
+behavior of individual components. Only when looked at when all local
+interactions are taken together, do new structures and patterns appear
+(emerge) <span class="citation" data-cites="camazine2001self">(Camazine
+et al. 2001)</span>. Self-organization is the concept of those emergent
+patterns form spontaneously, without any central control <span
+class="citation" data-cites="camazine2001self">(Camazine et al.
+2001)</span>. Individual agents follow simple, local rules, or
+interactions and yet the entire system organizes itself into self-made
+structures. In complex systems, emergence and self organization explain
+how collective behavior arises from individual decisions and how the
+system adapts to changing conditions <span class="citation"
+data-cites="camazine2001self">(Camazine et al. 2001)</span></p>
 <h2 id="dataset-used">Dataset used</h2>
 <p>We used the "Massive Yahoo Finance Dataset" from Kaggle <span
 class="citation"
@@ -215,211 +216,190 @@ data-cites="iveeaten3223times_massive_yahoo_finance_dataset">(iveeaten3223times
 2019)</span>, which contains five years of daily OHLCV data from almost
 all the S&amp;P 500 stocks. A deep explanation on how the dataset is set
 up with all the details is written in the introduction of this
-E-Portfolio. Fianancial markets are a great example of a complex system
-becasu many traders make decisions based only on their own information,
-yet together they creat big patterns, that are not easy to predict by
-looking just at one stock. Recurrence analysis helps see how the market
-keeps coming back to similar states over time, showing both the local
-trader interactions and the larger emergent trends they produce<span
-class="citation" data-cites="piskun2011recurrence">(Piskun and Piskun
-2011)</span>.</p>
-<p>The goal of this module is to assess how the market’s tendency to
-"return" to former states evolves over time, and what that tells us
-about stability, volatility regimes and transitions in complex
-systems.</p>
+E-Portfolio. Financial markets are a classic example of a
+self-organizing system. It includes local interactions, where traders
+react individually to news and price movements. It also shows emergent
+patterns, due to sector rotations, broad market rallies or crashes that
+cannot be predicted from any single stock alone<span class="citation"
+data-cites="sornette2003why">(Sornette 2003)</span>, <span
+class="citation" data-cites="mantegna1999hierarchical">(Mantegna
+1999)</span>.</p>
 <h1 id="methods">Methods</h1>
-<p>In this module, each stock’s daily closing prices were converted into
-log-returns and then those returns were standardized, so that every
-series had the same scale. This ensures that stocks with higher
-volatility do not dominate the recurrence calculations <span
-class="citation" data-cites="marwan2007recurrence">(Marwan et al.
-2007)</span>.</p>
-<p>Next, each recurrence plot is directly build on the 1D return series
-(embedding dimension = 1, time delay t = 1), so that RQA metrics
-quantify recurrences in the raw returns. For visualization, 2D time
-delay plots are created and a 3D embedding to capture short-term memory
-and reveal hidden structure in their path<span class="citation"
-data-cites="zbilut1992embeddings">(Zbilut and Webber 1992)</span>.</p>
-<p>For each stock, a single RQA was conducted over the entire five year
-period and classified stocks as "low_vol" and "high_vol" based on the
-standard deviation of their returns during that time and set the
-recurrence threshold so that 2% of all point pairs were marked as
-recurrences <span class="citation"
-data-cites="marwan2007recurrence">(Marwan et al. 2007)</span>. By
-setting a 2% threshold, the plots in each window had roughly the same
-density of recurrence points.</p>
-<p>These binary recurrence plots were used to measure how often the
-series returned near past states (%REC), how many of htose returns
-formed continuous diagonal lines (determinism/DET), and how long those
-diagonal lines ran on average (MDL). These statistics are often used to
-comprehend and prove how repetitive, predictable and persistent the
-return patterns are.</p>
-<p>To visualize the repetitive behavior, time-delay plots (2D and 3D)
-were created. 2D plots to visualize 2D charts of return against one-day
-lagged value, and 3D plots to visualize return against its values one
-and two days earlier. The 3D version is more comprehendible to conclude
-how return cluster tightly in clam markets and spread out when
-volatility spikes.</p>
-<p>Finally, a T-test was ran on DET and MDL of the windows with low- and
-high volatility groups on realized volatility to confirm whether these
-metrics changed significantly in crashed instead of calm markets.</p>
-<p>All these steps were implemented in Python.</p>
+<p>The first step was the pre-processing of the dataset. The Date column
+was parsed into a proper DataTime index, pivoting to a table of close
+prices for each stock by date, and computing daily returns via
+percentage change. By converting to returns, it strips out any long-term
+price trends and focuses on the co-movement that underlies the emergent
+market structure.</p>
+<p>The second step was to capture how the market structure evolves. A
+rolling-window network approach was used to capture this. The window was
+set at 60 trading days, advancing by 5 days each time, and in each
+window the Pearson’s correlation matrix of returns was calculated.</p>
+<p>After the 60 day windows were computed, a graph was built by placing
+an threshold between two stocks whenever their correlation exceeded 0,7.
+This threshold was set to ensure the focus on the strongest pairwise
+interaction that drive true emergent clusters <span class="citation"
+data-cites="onnela2003dynamics">(Onnela et al. 2003)</span>, while the
+rolling window reflects the market’s dynamics, allowing the clusters to
+form, dissolve and re-form as conditions change.</p>
+<p>On each thresholded network, a greedy modularity algorithm was run to
+detect communities in the stock market <span class="citation"
+data-cites="blondel2008fast">(Blondel et al. 2008)</span>. For every
+window the following three parameters were recorded: the sizes of the
+top three communities, the global modularity score, and the average
+clustering coefficient. Tracking both modularity and clustering allowed
+to distinguish when the market organizes into few well defined camps
+versus when tight local communities dominate.</p>
+<p>Finally, the dynamics were visualized into two ways: a time-series
+plots of community sizes, modularity and clustering coefficient to
+pinpoint when emergent structures strengthen or collapse and an alluvial
+(Sankey) diagram for key market regimes, like the COVID crash, to show
+how individual stocks migrate between communities across windows. These
+visualizations make the processes of emergence and self-organization
+visible and traceable in the data.</p>
 <h1 id="results">Results</h1>
-<p>Figure 1 and 2 presents the box plots of DET and MDL, respectively,
-that were computed from table 1. The results of table 1 were computed
-from the standard 2D embedding (m=2, t=1) for low and high volatility
-windows. During calm periods, DET clusters around 0.75, and in turbulent
-windows, like the COVID 19 crash and 2022 correction, DET falls to a
-median of 0.72. An independent t-test confirms this that this reduction
-is significant (P&lt;0,02). In contrast, MDL increases from a median
-near 3.2 in low volatility to 3.5 in high volatility, with several
-outliers. This is also significant (p&lt;0.01). These shifts indicate
-that crises disrupt the predictability of return sequences while
-occasionally producing long, irregular repeating segments.</p>
-<div id="tab:det_mdl_comparison">
-<table>
-<caption>Comparison of RQA metrics between low‐ and high‐volatility
-windows. DET differentiates the groups more strongly.</caption>
-<thead>
-<tr>
-<th style="text-align: left;">Metric</th>
-<th style="text-align: center;"><span
-class="math inline"><em>t</em></span>‐value</th>
-<th style="text-align: center;"><span
-class="math inline"><em>p</em></span>‐value</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">DET</td>
-<td style="text-align: center;">-3.34</td>
-<td style="text-align: center;">0.001</td>
-</tr>
-<tr>
-<td style="text-align: left;">MDL</td>
-<td style="text-align: center;">-3.05</td>
-<td style="text-align: center;">0.003</td>
-</tr>
-</tbody>
-</table>
-</div>
+<p>After doing the analysis: how the market evolves, 60-day window and
+the modularity and clustering coefficient, several plots were
+constructed to visualize the (possible) emergent and self organization
+behavior of the stock data.</p>
+<p>Figure 1 presents the daily closing prizes of AAPL, MSFT, GOOGL, AMZN
+and NVDA over a five year period. In 2019 and early 2020, the five
+stocks had a steady bull run, in February/march 2020, this bull run
+plummeted with 30 to 40 % in weeks, due to the COVID crash. In November
+2021 a new bull market emerged, especially by NVDA and AMZN. There was a
+correction in early 2022 and a gradual recovery in late 2023. These
+price regimes form the backdrop for the network reconfigurations that
+are analyzed below.</p>
 <figure id="fig:enter-label">
-<img src="Screenshot 2025-05-13 at 19.46.57.png" style="width:50.0%" />
-<figcaption>Boxplot: 2D DET by volatility group</figcaption>
+<img src="Screenshot 2025-05-11 at 09.41.16.png" style="width:100.0%" />
+<figcaption>plot of AAPL MSFT GOOGL AMZN NVDA over 5-year
+window</figcaption>
+</figure>
+<p>In figure 2, the top three community sizes of the 60-day window are
+illustrated. In early 2019, the dominant community contained between
+80-120 stocks, the second community about 50-70 and the smallest
+community about 24-40 stocks. Early 2019 reflects a sectorization in a
+calm market. When the COVID crash begon, the largest community grew to
+approximately 250 stocks, which demonstrates that extreme stress drives
+a broad synchronization among stocks. The weeks following the crash, the
+largest community plummeted back to 60-80 stocks, while the second and
+third community grew to 80-120 stocks. During the bull market in 2020
+and 2021, the dominant community built over 200 stocks.</p>
+<figure id="fig:enter-label">
+<img src="Screenshot 2025-05-06 at 13.32.55.png" style="width:100.0%" />
+<figcaption>Top three community sizes over time</figcaption>
+</figure>
+<p>To visualize how individual stocks migrate between emergent
+communities, the alluvial plot is demonstrated. Figure 3 to 6 present
+these alluvial plots for four key regimes. Figure 3 (COVID crash) shows
+the ribbons from all prior communities converge into a single block by
+early March 2020, they later divide into multiple communities. This
+shows the autonomous collapse and reconstruction of the network. Figure
+4 (Bull Market) shows nearly straight parallel ribbons across the
+windows, which reflect a stable, calm regime. In figure 5 ( 2022
+correction), new clusters take shape in mid 2022. Finally in figure 6
+(recovery 22-23), the ribbons show again straight flowing communities,
+marking the stabilization of emergent communities in the recovery phase
+of the COVID crash.</p>
+<figure id="fig:enter-label">
+<img src="Screenshot 2025-05-06 at 13.33.09.png" style="width:100.0%" />
+<figcaption>Alluvial plot: flow of stocks among top three communities
+over time</figcaption>
 </figure>
 <figure id="fig:enter-label">
-<img src="Screenshot 2025-05-13 at 19.55.44.png" style="width:50.0%" />
-<figcaption>Boxplot: 2D MDL by volatility group</figcaption>
-</figure>
-<p>Figure 3 and 4 repeats the comparison of figure 1 and 2, but for 3D
-embedding of the same series. Here, DET 3D values are higher, around
-0.94 in calm regimes and drop slightly to 0.93 in turbulent times. The
-drop remains significant (p&lt;0.01). In the MDL plot, a likewise modest
-increase of the median in turbulent periods, from 5.2 to 5.5
-(p&lt;0,03), which illustrates richer embeddings capture deeper
-recurrent structure.</p>
-<div id="tab:rqa_3d_comparison">
-<table>
-<caption>Comparison of RQA metrics for the three-dimensional
-embedding.</caption>
-<thead>
-<tr>
-<th style="text-align: left;">Metric</th>
-<th style="text-align: center;"><span
-class="math inline"><em>t</em></span>-value</th>
-<th style="text-align: center;"><span
-class="math inline"><em>p</em></span>-value</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">DET (3D embedding, <span
-class="math inline"><em>m</em> = 3</span>, <span
-class="math inline"><em>τ</em> = 1</span>)</td>
-<td style="text-align: center;">0.20</td>
-<td style="text-align: center;">0.841</td>
-</tr>
-<tr>
-<td style="text-align: left;">MDL (3D embedding, <span
-class="math inline"><em>m</em> = 3</span>, <span
-class="math inline"><em>τ</em> = 1</span>)</td>
-<td style="text-align: center;">-2.44</td>
-<td style="text-align: center;">0.016</td>
-</tr>
-</tbody>
-</table>
-</div>
-<figure id="fig:enter-label">
-<img src="Screenshot 2025-05-13 at 19.56.28.png" style="width:50.0%" />
-<figcaption>Boxplot: 3D DET by volatility group</figcaption>
+<img src="Screenshot 2025-05-06 at 13.32.48.png" style="width:100.0%" />
+<figcaption>Alluvial plot: recovery crash 2022-2023</figcaption>
 </figure>
 <figure id="fig:enter-label">
-<img src="Screenshot 2025-05-13 at 19.57.09.png" style="width:50.0%" />
-<figcaption>Boxplot: 3D MDL by volatility group</figcaption>
+<img src="Screenshot 2025-05-06 at 13.32.33.png" style="width:100.0%" />
+<figcaption>Alluvial plot: bull market</figcaption>
 </figure>
-<p>Figure 5 shows a screenshot of the interactive 3D embedding plot of
-the averages return series (m=3, t=1), colored by time index.
-Early-period points appear as a compact cluster, mid-crash points
-migrate into new regions of phase space and late period points settle
-into a different cluster.</p>
 <figure id="fig:enter-label">
-<img src="Screenshot 2025-05-13 at 19.40.10.png" style="width:100.0%" />
-<figcaption>Screenshot of interactive 3D embedding with time
-legend</figcaption>
+<img src="Screenshot 2025-05-06 at 13.32.40.png" style="width:100.0%" />
+<figcaption>Alluvial plot: 2022 correction</figcaption>
 </figure>
-<p>Finally, figure 6 shows a down-samples recurrence plot for the
-average of the five z-scored return series. Every fith point in the
-series with a RR of 5%. The thick diagonal confirms self-matches. But
-off-diagonal bands reveal repeating patterns: dense, parallel lines
-before index 50, fragmentation and space recurrence in the crash window
-of the COVID 19 crash (around 75-125) and the reemergence of the
-diagonal stripes in the recovery phase(150-200).</p>
 <figure id="fig:enter-label">
-<img src="screenshot mooi blaadje.png" style="width:50.0%" />
-<figcaption>Down sampled recurrence plot for average series</figcaption>
+<img src="Screenshot 2025-05-06 at 13.32.24.png" style="width:100.0%" />
+<figcaption>Alluvial plot: COVID crash</figcaption>
 </figure>
-<h1 id="discussion">Discussion</h1>
-<p>Recurrence analysis reveals that financial return series alternate
-between regimes of strong memory and predictability in calm markets and
-episodes of turbulent, irregular behavior during crises. The significant
-drop in DET and simultaneous rise in MDL during high-volatility windows
-indicates that the price paths lose their stable, recurrent patterns
-when crashes occur, yet the few remaining recurrences sometimes stretch
-into long segments. The 3D embedding reduces some of the noise. DET
-remains high even in turbulent periods. Visually, the down-sampled
-recurrence plots and the colored 3D path make these shifts visible.
-Dense, parallel diagonals in calm phases come after fragmented points in
-crashes, then re-form into a parallel diagonal when the markets
-recover.</p>
-<p>These findings fit within the framework of complex systems.
-Recurrence captures the market’s ability to revisit prior states, and
-shows how memeory fades and then partially returns around major shifts.
-The choice of embedding parameters, window length, and recurrence
-threshold all influence the sensitivity to these dynamics, highlighting
-the need for careful parameter selection and sensitivity analysis.</p>
-<h1 id="conclusion">Conclusion</h1>
-<p>By appling recurrence quantification and time-delay embedding to
-daily return series, this module has shown that financial markets
-exhibit clear signatures of memory and predictability in calm regimes
-and marked disruption during crisis. Statistics like DET and MDL provide
-quantitative markers of these shifts, while recurrence plots and 3D
-embeddings offer visual prove. This module demonstrates the power of RQA
-as a tool for uncovering hidden structure in complex economic data. In
-short, RQA reveals the financial market’s patterns of memory and
-unpredictability across calm and turbulent regimes, highlighting its
-power for understanding and anticipating complex system dynamics.</p>
+<p>In figure 7, the modularity (blue) and clustering coefficient
+(orange) over time is displayed over the same windows of 60 days. There
+are periods of high modularity, around 0.75-0.85 in mid 2020 and again
+in late 2022-2023, together with a low clustering coefficient,
+indicating the spontaneous emergence of a few separated communities. On
+contrast, during periods of extreme stress like the COVID crash and the
+2022 correction, the clustering coefficient spikes to 0.6-0.8 while the
+modularity plummets down to 0.2-0.3. This means that in that context,
+almost every pair of neighboring stocks forms a triangle, there is no
+clear global partition.</p>
+<p>In self-organizing systems like financial markets, large, well
+defined clusters and tight local connections are mutually exclusive. As
+clear global communities emerge, small cohesive groups weaken, and as
+local cohesion grows stronger, global structure weakens.</p>
+<figure id="fig:enter-label">
+<img src="Screenshot 2025-05-06 at 13.33.16.png" style="width:100.0%" />
+<figcaption>Modularity and clustering coefficient over time</figcaption>
+</figure>
+<h1 id="discussion-conclusion">Discussion &amp; Conclusion</h1>
+<h2 id="discussion">Discussion</h2>
+<p>This analysis demonstrates how financial markets exhibit both
+emergence and self-organization through the dynamic play between various
+tickers of various communities. During periods of volatility, like the
+COVID-19 crash and the 2022 correction, the average clustering
+coefficient is high, as nearly every stock forms tight, overlapping
+"triangles" of high correlation. Simultaneously, modularity is low
+because the market behaves as one block rather than a collection of
+distinct sectors. On the other hand, in calmer markets, the network
+self-organizes into a few well-separated communities: clear sector-like
+clusters emerge and modularity is high.</p>
+<p>The contrast of high modularity and a low clustering coefficient in
+calm markets and vice versa illustrates a hallmark of complex systems:
+without any central coordinator, local interactions alone produce
+coherent macro patterns. However, this method also reveals important
+limitations. The choice of a fixed 60-day window and a 0.7 correlation
+threshold strongly shapes the size and stability of detected
+communities. Pearson correlation ignores nonlinear dependencies, and
+greedy modularity can miss small, but meaningful sub clusters. This is
+because the modularity function has a built-it "resolution limit": it
+tends to merge small groups into larger ones when the overall network is
+large, making fine-grained structures invisible <span class="citation"
+data-cites="fortunato2007resolution">(Fortunato and Barthélemy
+2007)</span>.</p>
+<p>In future research, other nonlinear methods can be used to
+demonstrate the emergence and self-organizational characteristics of the
+network that add to the proven linear emergence and self-organization in
+this E-portfolio module.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>In this E-portfolio module, the rolling window correlation networks,
+community detection and complementary network metrics were used on the
+Yahoo finance dataset. Large, well-defined markets sectors emerge
+spontaneously when volatility is low, and these sectors autonomously
+fragment into tightly connected local pockets under stress. The alluvial
+plots (figure ... till ...) made the migration of individual stocks
+between clusters explicit, illustrating the self-organizing aspect of
+the market structure in response to crashes. Together, these findings
+provide a clear, illustration of emergence and self-organization, while
+also highlighting the importance of more nuanced, adaptive network
+approaches.</p>
 <div id="refs" class="references csl-bib-body hanging-indent"
 data-entry-spacing="0" role="list">
-<div id="ref-eckmann1987recurrence" class="csl-entry" role="listitem">
-Eckmann, J.-P., S. O. Kamphorst, and D. Ruelle. 1987. <span>“Recurrence
-Plots of Dynamical Systems.”</span> <em>Europhysics Letters</em> 4 (9):
-973–77.
+<div id="ref-blondel2008fast" class="csl-entry" role="listitem">
+Blondel, Vincent D., Jean-Loup Guillaume, Renaud Lambiotte, and Etienne
+Lefebvre. 2008. <span>“Fast Unfolding of Communities in Large
+Networks.”</span> <em>Journal of Statistical Mechanics: Theory and
+Experiment</em>, no. 10: P10008. <a
+href="https://doi.org/10.1088/1742-5468/2008/10/P10008">https://doi.org/10.1088/1742-5468/2008/10/P10008</a>.
 </div>
-<div id="ref-fabretti2004recurrence" class="csl-entry" role="listitem">
-Fabretti, Alessandro, and Marcel Ausloos. 2004. <span>“Recurrence Plot
-and Recurrence Quantification Analysis Techniques for Detecting a
-Critical Regime: Examples from Financial Market Indices.”</span>
-<em>International Journal of Modern Physics C</em> 15 (10): 1373–84.
+<div id="ref-camazine2001self" class="csl-entry" role="listitem">
+Camazine, Steven, Jean-Louis Deneubourg, Nigel R. Franks, James Sneyd,
+Guy Theraulaz, and Eric Bonabeau. 2001. <em>Self-Organization in
+Biological Systems</em>. Princeton, NJ: Princeton University Press.
+</div>
+<div id="ref-fortunato2007resolution" class="csl-entry" role="listitem">
+Fortunato, Santo, and Marc Barthélemy. 2007. <span>“Resolution Limit in
+Community Detection.”</span> <em>Proceedings of the National Academy of
+Sciences</em> 104 (1): 36–41. <a
+href="https://doi.org/10.1073/pnas.0605965104">https://doi.org/10.1073/pnas.0605965104</a>.
 </div>
 <div id="ref-iveeaten3223times_massive_yahoo_finance_dataset"
 class="csl-entry" role="listitem">
@@ -428,20 +408,23 @@ Kaggle, <a
 href="https://www.kaggle.com/datasets/iveeaten3223times/massive-yahoo-finance-dataset"
 class="uri">https://www.kaggle.com/datasets/iveeaten3223times/massive-yahoo-finance-dataset</a>.
 </div>
-<div id="ref-marwan2007recurrence" class="csl-entry" role="listitem">
-Marwan, Norbert, M. C. Romano, M. Thiel, and Jürgen Kurths. 2007.
-<span>“Recurrence Plots for the Analysis of Complex Systems.”</span>
-<em>Physics Reports</em> 438 (5–6): 237–329.
+<div id="ref-mantegna1999hierarchical" class="csl-entry"
+role="listitem">
+Mantegna, Rosario N. 1999. <span>“Hierarchical Structure in Financial
+Markets.”</span> <em>The European Physical Journal B</em> 11 (1):
+193–97. <a
+href="https://doi.org/10.1007/s100510050929">https://doi.org/10.1007/s100510050929</a>.
 </div>
-<div id="ref-piskun2011recurrence" class="csl-entry" role="listitem">
-Piskun, Olga, and Sergey Piskun. 2011. <span>“Recurrence Quantification
-Analysis of Financial Market Crashes and Crises.”</span> <em>Physica A:
-Statistical Mechanics and Its Applications</em> 390 (11): 2109–20.
+<div id="ref-onnela2003dynamics" class="csl-entry" role="listitem">
+Onnela, J.-P., A. Chakraborti, K. Kaski, and J. Kertész. 2003.
+<span>“Dynamics of Market Correlations: Taxonomy and Portfolio
+Analysis.”</span> <em>Physical Review E</em> 68: 056110. <a
+href="https://doi.org/10.1103/PhysRevE.68.056110">https://doi.org/10.1103/PhysRevE.68.056110</a>.
 </div>
-<div id="ref-zbilut1992embeddings" class="csl-entry" role="listitem">
-Zbilut, J. P., and C. L. Jr. Webber. 1992. <span>“Embeddings and Delays
-as Derived from Quantification of Recurrence Plots.”</span> <em>Physics
-Letters A</em> 171 (3–4): 199–203.
+<div id="ref-sornette2003why" class="csl-entry" role="listitem">
+Sornette, Didier. 2003. <em>Why Stock Markets Crash: Critical Events in
+Complex Financial Systems</em>. Princeton, NJ: Princeton University
+Press.
 </div>
 </div>
 </body>
