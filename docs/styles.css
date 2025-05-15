@@ -3,11 +3,12 @@ body {
     line-height: 1.6;
     margin: 0;
     padding: 0;
-    background-color: #f9f9f9;
+    background-color: #F5F7FA;
+    color: #1C1C1C;
 }
 
 header {
-    background-color: #94618E;
+    background-color: #1F2833;
     color: white;
     padding: 20px 0;
     text-align: center;
@@ -23,8 +24,9 @@ header p {
 }
 
 nav {
-    background: #49274A;
+    background: #20232A;
     padding: 10px 0;
+    text-align: center;
 }
 
 nav ul {
@@ -47,7 +49,7 @@ nav ul li a {
 
 main.portfolio-summary {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Adjusts for responsive layout */
+    grid-template-columns: repeat(auto-fill, minmax(40%, 1fr)); /* Adjusts for responsive layout */
     gap: 40px;
     padding: 20px;
     width: 70%; /* Adjust width as needed */
@@ -93,7 +95,7 @@ main.portfolio-summary {
 }
 
 footer {
-    background-color: #94618E;
+    background-color: #1F2833;
     color: white;
     text-align: center;
     padding: 10px 0;
@@ -103,6 +105,15 @@ footer {
     margin-top: 20px;
 }
 
+footer a {
+    color: #3B82F6; /* Bright aqua, matches your hover scheme */
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+footer a:hover {
+    color: #4C6793; /* Slightly darker cyan-teal on hover */
+}
 @media (max-width: 768px) {
     nav ul li {
         display: block;
@@ -148,7 +159,7 @@ footer {
 }
 
 #comment-form button {
-    background-color: #94618E;
+    background-color: #1F2833;
     color: white;
     padding: 10px;
     border: none;
@@ -157,7 +168,7 @@ footer {
 }
 
 #comment-form button:hover {
-    background-color: #49274A;
+    background-color: #0B0C10;
 }
 
 #comment-section {
@@ -186,7 +197,7 @@ footer {
 }
 
 .delete-comment {
-    background-color: #49274A; /* Using your darker purple color */
+    background-color: #0B0C10; /* Using your darker purple color */
     color: white;
     border: none;
     border-radius: 4px;
@@ -196,7 +207,7 @@ footer {
 }
 
 .delete-comment:hover {
-    background-color: #94618E; /* Using your lighter purple color */
+    background-color: #1F2833; /* Using your lighter purple color */
 }
 
 
@@ -226,7 +237,7 @@ th, td {
 
 /* Table header styling */
 th {
-    background-color: #94618E;
+    background-color: #1F2833;
     color: white;
     font-weight: bold;
 }
