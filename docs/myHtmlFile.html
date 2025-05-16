@@ -189,242 +189,367 @@
     }  </style>
 </head>
 <body>
-<h1 id="sec:introduction">Introduction</h1>
-<p>In this module, emergence and self-organization is discussed in the
-context of complex systems, specifically in the context of the stock
-market of the last five years.</p>
-<h2 id="what-is-emergence-self-organization">What is emergence &amp;
-self organization?</h2>
-<p>Emergence is the concept of describing how a pattern property at
-system level appears and that it cannot be directly inferred from the
-behavior of individual components. Only when looked at when all local
-interactions are taken together, do new structures and patterns appear
-(emerge) <span class="citation" data-cites="camazine2001self">(Camazine
-et al. 2001)</span>. Self-organization is the concept of those emergent
-patterns form spontaneously, without any central control <span
-class="citation" data-cites="camazine2001self">(Camazine et al.
-2001)</span>. Individual agents follow simple, local rules, or
-interactions and yet the entire system organizes itself into self-made
-structures. In complex systems, emergence and self organization explain
-how collective behavior arises from individual decisions and how the
-system adapts to changing conditions <span class="citation"
-data-cites="camazine2001self">(Camazine et al. 2001)</span></p>
-<h2 id="dataset-used">Dataset used</h2>
-<p>We used the "Massive Yahoo Finance Dataset" from Kaggle <span
-class="citation"
-data-cites="iveeaten3223times_massive_yahoo_finance_dataset">(iveeaten3223times
-2019)</span>, which contains five years of daily OHLCV data from almost
-all the S&amp;P 500 stocks. A deep explanation on how the dataset is set
-up with all the details is written in the introduction of this
-E-Portfolio. Financial markets are a classic example of a
-self-organizing system. It includes local interactions, where traders
-react individually to news and price movements. It also shows emergent
-patterns, due to sector rotations, broad market rallies or crashes that
-cannot be predicted from any single stock alone<span class="citation"
-data-cites="sornette2003why">(Sornette 2003)</span>, <span
-class="citation" data-cites="mantegna1999hierarchical">(Mantegna
-1999)</span>.</p>
-<h1 id="methods">Methods</h1>
-<p>The first step was the pre-processing of the dataset. The Date column
-was parsed into a proper DataTime index, pivoting to a table of close
-prices for each stock by date, and computing daily returns via
-percentage change. By converting to returns, it strips out any long-term
-price trends and focuses on the co-movement that underlies the emergent
-market structure.</p>
-<p>The second step was to capture how the market structure evolves. A
-rolling-window network approach was used to capture this. The window was
-set at 60 trading days, advancing by 5 days each time, and in each
-window the Pearson’s correlation matrix of returns was calculated.</p>
-<p>After the 60 day windows were computed, a graph was built by placing
-an threshold between two stocks whenever their correlation exceeded 0,7.
-This threshold was set to ensure the focus on the strongest pairwise
-interaction that drive true emergent clusters <span class="citation"
-data-cites="onnela2003dynamics">(Onnela et al. 2003)</span>, while the
-rolling window reflects the market’s dynamics, allowing the clusters to
-form, dissolve and re-form as conditions change.</p>
-<p>On each thresholded network, a greedy modularity algorithm was run to
-detect communities in the stock market <span class="citation"
-data-cites="blondel2008fast">(Blondel et al. 2008)</span>. For every
-window the following three parameters were recorded: the sizes of the
-top three communities, the global modularity score, and the average
-clustering coefficient. Tracking both modularity and clustering allowed
-to distinguish when the market organizes into few well defined camps
-versus when tight local communities dominate.</p>
-<p>Finally, the dynamics were visualized into two ways: a time-series
-plots of community sizes, modularity and clustering coefficient to
-pinpoint when emergent structures strengthen or collapse and an alluvial
-(Sankey) diagram for key market regimes, like the COVID crash, to show
-how individual stocks migrate between communities across windows. These
-visualizations make the processes of emergence and self-organization
-visible and traceable in the data.</p>
-<h1 id="results">Results</h1>
-<p>After doing the analysis: how the market evolves, 60-day window and
-the modularity and clustering coefficient, several plots were
-constructed to visualize the (possible) emergent and self organization
-behavior of the stock data.</p>
-<p>Figure 1 presents the daily closing prizes of AAPL, MSFT, GOOGL, AMZN
-and NVDA over a five year period. In 2019 and early 2020, the five
-stocks had a steady bull run, in February/march 2020, this bull run
-plummeted with 30 to 40 % in weeks, due to the COVID crash. In November
-2021 a new bull market emerged, especially by NVDA and AMZN. There was a
-correction in early 2022 and a gradual recovery in late 2023. These
-price regimes form the backdrop for the network reconfigurations that
-are analyzed below.</p>
-<figure id="fig:enter-label">
-<img src="Screenshot 2025-05-11 at 09.41.16.png" style="width:100.0%" />
-<figcaption>plot of AAPL MSFT GOOGL AMZN NVDA over 5-year
-window</figcaption>
+<h1 id="introduction-to-phasespace-reconstruction">Introduction to
+Phase–Space Reconstruction</h1>
+<p>When you record a single signal from a complex dynamical system, say,
+the closing price of a stock over time, you’re capturing only one
+“shadow” of the system’s full behavior. Yet many of the commonly used
+tools of nonlinear dynamics (e.g., Lyapunov exponents, fractal
+dimensions, recurrence plots) require access to the system’s <em>state
+space</em>, where each axis represents one of its degrees of freedom.
+<em>Phase Space Reconstruction</em> is the tool that lets you rebuild a
+high-dimensional picture of the system from just that one time
+series.</p>
+<h2 id="delay-embedding">Delay Embedding</h2>
+<p>The simplest and most widely used approach is <em>delay
+embedding</em>, where you convert your scalar series <span
+class="math inline"><em>x</em>(<em>t</em>)</span> into vectors of the
+form <span
+class="math display"><strong>X</strong>(<em>t</em>) = [<em>x</em>(<em>t</em>), <em>x</em>(<em>t</em> + <em>τ</em>), <em>x</em>(<em>t</em> + 2<em>τ</em>), …, <em>x</em>(<em>t</em> + (<em>m</em> − 1)<em>τ</em>)].</span>
+Here:</p>
+<ul>
+<li><p><span class="math inline"><em>m</em></span> is the <em>embedding
+dimension</em>: how many past values you stack together.</p></li>
+<li><p><span class="math inline"><em>τ</em></span> is the <em>time
+delay</em>: how far apart in time those samples are.</p></li>
+</ul>
+<p>By applying this window to the data, you generate a set of points in
+<span class="math inline">ℝ<sup><em>m</em></sup></span>, which can
+approximate the structure of the system’s underlying attractor.</p>
+<h2 id="takens-theorem">Takens’ Theorem</h2>
+<p>Takens’ theorem tells us that, under mild conditions, you can rebuild
+the full behavior of a system from just one observed signal by creating
+vectors of delayed values. If the system’s true dynamics live in a <span
+class="math inline"><em>d</em></span>-dimensional space, then using at
+least <span class="math inline"><em>m</em> = 2<em>d</em> + 1</span>
+delayed samples guarantees that the cloud of points in <span
+class="math inline">ℝ<sup><em>m</em></sup></span> will reflect the
+original system’s structure, allowing you to study its geometry and
+dynamics from a single time series.</p>
+<h2 id="practical-workflow">Practical Workflow</h2>
+<ol>
+<li><p><strong>Choose a delay <span
+class="math inline"><em>τ</em></span>:</strong><br />
+Use the Autocorrelation Function (ACF) or Average Mutual Information
+(AMI) to find a delay where successive coordinates carry new
+information.</p></li>
+<li><p><strong>Determine embedding dimension <span
+class="math inline"><em>m</em></span>:</strong><br />
+Apply False Nearest Neighbors or Cao’s method to reveal the smallest
+<span class="math inline"><em>m</em></span> where the attractor unfolds
+without self-overlap.</p></li>
+<li><p><strong>Visualize and analyze:</strong> Perform the Phase Space
+Reconstruction and plot.</p></li>
+<li><p><strong>Subsequent analyses:</strong><br />
+Recurrence plots, estimate Lyapunov exponents, and more.</p></li>
+</ol>
+<p>By following these steps, you can turn a single time series into a
+useful representation of the system’s hidden dynamics. In the next
+sections, we’ll show how to choose a suitable delay <span
+class="math inline"><em>τ</em></span>, determine the right embedding
+dimension <span class="math inline"><em>m</em></span>, and implement the
+full reconstruction in R so you can determine the system’s geometric and
+dynamical properties from your data.</p>
+<h1 id="required-libraries">Required Libraries</h1>
+<p>To perform our analysis, we load several R libraries:</p>
+<pre><code>library(nonlinearTseries)
+library(crqa)
+library(casnet)
+library(tseriesChaos)
+library(plot3D)
+library(scatterplot3d)
+library(rgl)
+library(ggplot2)
+library(Hmisc)</code></pre>
+<h1 id="loading-and-filtering-data">Loading and Filtering Data</h1>
+<p>To start, we will load our data set and take the stock market metrics
+from Amazon (AMZN), pulled from the ’Massive Yahoo Finance Dataset’.
+This data was measured from 29-11-2018 to 29-11-2023, between which the
+stock exchange was open for 1258 days. This company was chosen since it
+operates within the retail domain, which is known to have seasonal
+fluctuations <span class="citation"
+data-cites="buckley2024seasonalstocks">(Buckley 2024)</span>, making it
+potentially more interesting for our analysis. However, the code can be
+easily adjusted to any of the companies in the dataset.</p>
+<pre><code># Load data set
+data &lt;- read.csv(&quot;stock_details_5_years.csv&quot;)
+
+# Filter for specific company
+amzn &lt;- data[data$Company == &quot;AMZN&quot;, ]</code></pre>
+<p>Let us first look at the stock market metrics of Amazon, specifically
+the closing price of the stock on any given day (Figure 1).</p>
+<pre><code># Plot the x and y series with y-axis from 0 to 300
+plot(amzn$Close, 
+  type = &#39;l&#39;, 
+  xlab = &quot;Time point&quot;, 
+  ylab = &quot;Closing price in dollars ($)&quot;,
+  main = &quot;Stock development of Amazon and Walmart&quot;, 
+  ylim = c(0, 300))
+legend(&quot;topright&quot;, legend = c(&quot;Amazon&quot;, &quot;Walmart&quot;), col = c(&quot;black&quot;, &quot;red&quot;), lty = 1)</code></pre>
+<figure id="fig:Closing Prices">
+<img src="closing stock.png" style="width:100.0%" />
+<figcaption>Amazon closing stock prices</figcaption>
 </figure>
-<p>In figure 2, the top three community sizes of the 60-day window are
-illustrated. In early 2019, the dominant community contained between
-80-120 stocks, the second community about 50-70 and the smallest
-community about 24-40 stocks. Early 2019 reflects a sectorization in a
-calm market. When the COVID crash begon, the largest community grew to
-approximately 250 stocks, which demonstrates that extreme stress drives
-a broad synchronization among stocks. The weeks following the crash, the
-largest community plummeted back to 60-80 stocks, while the second and
-third community grew to 80-120 stocks. During the bull market in 2020
-and 2021, the dominant community built over 200 stocks.</p>
-<figure id="fig:enter-label">
-<img src="Screenshot 2025-05-06 at 13.32.55.png" style="width:100.0%" />
-<figcaption>Top three community sizes over time</figcaption>
+<h1 id="determine-the-time-delay-tau">Determine the time delay <span
+class="math inline"><em>τ</em></span></h1>
+<p>To determine an appropriate time delay <span
+class="math inline"><em>τ</em></span> we will be looking at two methods:
+the Autocorrelation Function (ACF) and the Average Mutual Information
+(AMI) function.</p>
+<h2 id="autocorrelation-function-acf">Autocorrelation Function
+(ACF)</h2>
+<p>The Autocorrelation Function (ACF) measures the linear correlation
+between a time series <span
+class="math inline"><em>x</em>(<em>t</em>)</span> and a time‐shifted
+version <span
+class="math inline"><em>x</em>(<em>t</em> + <em>k</em>)</span> for
+various lags <span class="math inline"><em>k</em></span>, providing a
+quantitative view of how past values influence future ones. By plotting
+the ACF against lag <span class="math inline"><em>k</em></span>, you can
+identify repeating cycles, characteristic decay rates, and the point at
+which the series loses memory of its past. This information is needed
+for selecting an appropriate delay <span
+class="math inline"><em>τ</em></span>.</p>
+<pre><code># Determine the ACF
+tau.acf &lt;- timeLag(
+  amzn$Close,
+  technique = &quot;acf&quot;,
+  lag.max   = 250,
+  do.plot   = TRUE
+)</code></pre>
+<p>The ACF for the AMZN closing price is shown in Figure 2. The ACF
+gives an optimal delay of 160 time points. This can be identified by the
+point where the lag results in an ACF that is below ... (green dotted
+line), which is common practice.</p>
+<figure id="fig:acf">
+<img src="acf.png" style="width:100.0%" />
+<figcaption>Autocorrelation Function (ACF) of AMZN stock</figcaption>
 </figure>
-<p>To visualize how individual stocks migrate between emergent
-communities, the alluvial plot is demonstrated. Figure 3 to 6 present
-these alluvial plots for four key regimes. Figure 3 (COVID crash) shows
-the ribbons from all prior communities converge into a single block by
-early March 2020, they later divide into multiple communities. This
-shows the autonomous collapse and reconstruction of the network. Figure
-4 (Bull Market) shows nearly straight parallel ribbons across the
-windows, which reflect a stable, calm regime. In figure 5 ( 2022
-correction), new clusters take shape in mid 2022. Finally in figure 6
-(recovery 22-23), the ribbons show again straight flowing communities,
-marking the stabilization of emergent communities in the recovery phase
-of the COVID crash.</p>
-<figure id="fig:enter-label">
-<img src="Screenshot 2025-05-06 at 13.33.09.png" style="width:100.0%" />
-<figcaption>Alluvial plot: flow of stocks among top three communities
-over time</figcaption>
+<h2 id="average-mutual-information-ami">Average Mutual Information
+(AMI)</h2>
+<p>The Average Mutual Information (AMI) quantifies the shared
+information between a time series <span
+class="math inline"><em>x</em>(<em>t</em>)</span> and its time‐shifted
+counterpart <span
+class="math inline"><em>x</em>(<em>t</em> + <em>k</em>)</span> for
+various lags <span class="math inline"><em>k</em></span>, capturing both
+linear and nonlinear dependencies. By plotting AMI against lag <span
+class="math inline"><em>k</em></span>, you can detect the first local
+minimum where successive samples become sufficiently independent, making
+it a reliable indicator for selecting an appropriate delay <span
+class="math inline"><em>τ</em></span>.</p>
+<pre><code># Determine the AMI
+tau.ami &lt;- timeLag(
+  amzn$Close, 
+  technique = &quot;ami&quot;, 
+  lag.max = 250, 
+  do.plot = True)
+print(tau.ami)</code></pre>
+<p>The AMI for the AMZN closing price is shown in Figure 3. This can
+again be identified by the point where the lag results in a AMI that is
+below ..., which is 33.</p>
+<figure id="fig:ami">
+<img src="ami.png" style="width:100.0%" />
+<figcaption>Average Mutual Information (AMI) of AMZN stock</figcaption>
 </figure>
-<figure id="fig:enter-label">
-<img src="Screenshot 2025-05-06 at 13.32.48.png" style="width:100.0%" />
-<figcaption>Alluvial plot: recovery crash 2022-2023</figcaption>
+<h2 id="choosing-the-right-time-delay">Choosing the right time
+delay</h2>
+<p>The ACF and AMI often yield different delays, and higher <span
+class="math inline"><em>τ</em></span> values imply more "skipped" data.
+Balancing the system’s time scale and the need for independent
+coordinates, we choose <span class="math inline"><em>τ</em> = 33</span>.
+A <span class="math inline"><em>τ</em></span> of 160 would simply be too
+large of a delay to capture the repeating patterns, as more data would
+get skipped.</p>
+<h1 id="determine-the-number-of-dimensions">Determine the number of
+dimensions</h1>
+<p>To determine the appropriate number of dimensions, we also use two
+different methods: the False Nearest Neighbor method and Cao’s
+method.</p>
+<h2 id="false-nearest-neighbor-method">False Nearest Neighbor
+Method</h2>
+<p>The False Nearest Neighbor (FNN) method estimates the minimum
+embedding dimension <span class="math inline"><em>m</em></span> by
+detecting when increasing <span class="math inline"><em>m</em></span> no
+longer reduces the fraction of "false" neighbors. False neighbors are
+points that appear close in low dimensions only because of projection
+overlap rather than true dynamical proximity <span class="citation"
+data-cites="kennel1992determining">(Kennel, Brown, and Abarbanel
+1992)</span>. As <span class="math inline"><em>m</em></span> increases,
+the percentage of false neighbors should drop toward zero once the
+attractor is fully unfolded.</p>
+<p>First, we find an appropriate Theiler window. The code reconstructs
+the phase‐space attractor with delay <span
+class="math inline"><em>τ</em></span> and dimension <span
+class="math inline"><em>m</em></span>, then builds a space–time
+separation plot over a range of lags. This shows how the temporal
+distance between pairs of data points affects their spatial distance on
+the reconstructed attractor. The Theiler window can then be chosen as
+the first point where the size is large enough to exclude points where
+temporal distance affects the spatial distance.</p>
+<pre><code># 1) Reconstruct the attractor
+takens &lt;- buildTakens(
+  amzn$Close,
+  embedding.dim = emb.dim,
+  time.lag       = tau.ami
+)
+
+# 2) Draw the space-time seperation plot
+#    number.time.steps is the max temporal separation to inspect
+stp.obj &lt;- spaceTimePlot(
+  takens,
+  number.time.steps = 200,
+  do.plot            = TRUE,
+  main               = &quot;Space-Time Separation Plot&quot;
+) 
+
+# 3) Pull out the contour-line matrix
+contours &lt;- getContourLines(stp.obj)
+
+# 4) Sum over all percentiles to get a single &quot;joint radius&quot; curve
+jointRadius &lt;- colSums(contours)
+
+# 5) Identify local maxima
+localMaxima &lt;- which(diff(sign(diff(jointRadius))) == -2) + 1
+
+# 6) Pick the first such maximum as your Theiler window
+theilerWindow &lt;- localMaxima[1]</code></pre>
+<figure id="fig:theiler">
+<img src="theiler.png" style="width:100.0%" />
+<figcaption>Space-Time separation plot to determine the appropriate
+Theiler window.</figcaption>
 </figure>
-<figure id="fig:enter-label">
-<img src="Screenshot 2025-05-06 at 13.32.33.png" style="width:100.0%" />
-<figcaption>Alluvial plot: bull market</figcaption>
+<p>This analysis gives a Theiler Window of 41. We can then insert this
+into the code below, that gives us the minimum embedding dimension using
+the FNN method.</p>
+<pre><code># Estimate false nearest neighbors for embedding dimensions up to 15
+fnn.out &lt;- false.nearest(
+  amzn$Close,       # time series
+  m   = 15,               # max embedding dimension to test
+  d   = tau.ami,          # time delay (from AMI)
+  t   = 41,               # Theiler window 
+  eps = sd(amzn$Close) / 10  # neighborhood radius
+)
+plot(fnn.out, main = &quot;False Nearest Neighbors for AMZN Closing Prices&quot;)</code></pre>
+<figure id="fig:fnn">
+<img src="fnn.png" />
+<figcaption>Fraction of false nearest neighbors as a function of
+embedding dimension for the AMZN closing‐price series. The recommended
+embedding dimension is where the curve first reaches (or nearly reaches)
+zero.</figcaption>
 </figure>
-<figure id="fig:enter-label">
-<img src="Screenshot 2025-05-06 at 13.32.40.png" style="width:100.0%" />
-<figcaption>Alluvial plot: 2022 correction</figcaption>
+<p>In Figure <a href="#fig:fnn" data-reference-type="ref"
+data-reference="fig:fnn">5</a>, note that the percentage of false
+neighbors rises to nearly 100 percent, which is not what we would like
+to see. Some studies have shown that FNN is not always suitable for any
+application, especially when the data is rather noisy <span
+class="citation" data-cites="rhodes1997false">(Rhodes and Morari
+1997)</span>, which our data certainly is. For our purposes, we will be
+using Cao’s method.</p>
+<h2 id="caos-method">Cao’s Method</h2>
+<p>Cao’s method estimates the minimum embedding dimension by examining
+how nearest‐neighbor distances change as the dimension increases. For
+each candidate dimension <span class="math inline"><em>m</em></span>, it
+computes the ratio <span
+class="math inline"><em>E</em>1(<em>m</em>)</span> of the average
+distance in <span class="math inline"><em>m</em> + 1</span> dimensions
+to that in <span class="math inline"><em>m</em></span> dimensions. When
+<span class="math inline"><em>E</em>1(<em>m</em>)</span> stabilizes near
+1, adding further dimensions no longer reveals new structure, indicating
+that <span class="math inline"><em>m</em></span> is sufficient. A
+secondary statistic <span
+class="math inline"><em>E</em>2(<em>m</em>)</span> helps distinguish
+deterministic signals from stochastic noise.</p>
+<pre><code># Using Cao&#39;s method
+emb.dim = estimateEmbeddingDim(amzn$Close, time.lag = tau.ami, max.embedding.dim = 15)
+print(emb.dim)</code></pre>
+<p>Cao’s method yields a minimum embedding dimension of 7, as this is
+the point where E1(d) enters into the threshold of 1 (and remains
+there). We will be using this value as the embedding dimension in the
+next section.</p>
+<figure id="fig:ami">
+<img src="cao.png" style="width:100.0%" />
+<figcaption aria-hidden="true"></figcaption>
 </figure>
-<figure id="fig:enter-label">
-<img src="Screenshot 2025-05-06 at 13.32.24.png" style="width:100.0%" />
-<figcaption>Alluvial plot: COVID crash</figcaption>
+<h1 id="visualize-and-analyze">Visualize and analyze</h1>
+<p>As a result of the previous two sections, we have a delay value <span
+class="math inline"><em>τ</em></span> of 33 and a minimum embedding
+dimension <span class="math inline"><em>m</em></span> of 7. We can now
+do our Phase Space Reconstruction using the ’buildTakens’ function.</p>
+<pre><code># Phase Space Reconstruction
+amzn.ps &lt;- buildTakens(amzn$Close,emb.dim,tau.ami)
+head(amzn.ps, n=12)</code></pre>
+<p>....Matrix</p>
+<p>You can see there are seven columns since our embedding dimension is
+7. We can now try to plot the Phase Space Reconstruction that we end up
+with. Unfortunately, we don’t have any way of visualizing a plot of 7
+dimensions. We can however, plot the first three dimensions. We will
+plot in 3D using lines, and plot an interactive 3D scatter plot.</p>
+<pre><code># Plot first three dimensions of Phase Space Reconstruction
+lines3D(amzn.ps[,1],amzn.ps[,2],amzn.ps[,3], t=&quot;l&quot;, col=&quot;blue&quot;, asp=1)
+plot3d(amzn.ps[,1],amzn.ps[,2],amzn.ps[,3],col = &#39;blue&#39;, size=3)</code></pre>
+<figure id="fig:ami">
+<img src="3dlines.png" style="width:100.0%" />
+<figcaption>The first three dimensions of the Phase Space Reconstruction
+of the Amazon closing stock price</figcaption>
 </figure>
-<p>In figure 7, the modularity (blue) and clustering coefficient
-(orange) over time is displayed over the same windows of 60 days. There
-are periods of high modularity, around 0.75-0.85 in mid 2020 and again
-in late 2022-2023, together with a low clustering coefficient,
-indicating the spontaneous emergence of a few separated communities. On
-contrast, during periods of extreme stress like the COVID crash and the
-2022 correction, the clustering coefficient spikes to 0.6-0.8 while the
-modularity plummets down to 0.2-0.3. This means that in that context,
-almost every pair of neighboring stocks forms a triangle, there is no
-clear global partition.</p>
-<p>In self-organizing systems like financial markets, large, well
-defined clusters and tight local connections are mutually exclusive. As
-clear global communities emerge, small cohesive groups weaken, and as
-local cohesion grows stronger, global structure weakens.</p>
-<figure id="fig:enter-label">
-<img src="Screenshot 2025-05-06 at 13.33.16.png" style="width:100.0%" />
-<figcaption>Modularity and clustering coefficient over time</figcaption>
-</figure>
-<h1 id="discussion-conclusion">Discussion &amp; Conclusion</h1>
-<h2 id="discussion">Discussion</h2>
-<p>This analysis demonstrates how financial markets exhibit both
-emergence and self-organization through the dynamic play between various
-tickers of various communities. During periods of volatility, like the
-COVID-19 crash and the 2022 correction, the average clustering
-coefficient is high, as nearly every stock forms tight, overlapping
-"triangles" of high correlation. Simultaneously, modularity is low
-because the market behaves as one block rather than a collection of
-distinct sectors. On the other hand, in calmer markets, the network
-self-organizes into a few well-separated communities: clear sector-like
-clusters emerge and modularity is high.</p>
-<p>The contrast of high modularity and a low clustering coefficient in
-calm markets and vice versa illustrates a hallmark of complex systems:
-without any central coordinator, local interactions alone produce
-coherent macro patterns. However, this method also reveals important
-limitations. The choice of a fixed 60-day window and a 0.7 correlation
-threshold strongly shapes the size and stability of detected
-communities. Pearson correlation ignores nonlinear dependencies, and
-greedy modularity can miss small, but meaningful sub clusters. This is
-because the modularity function has a built-it "resolution limit": it
-tends to merge small groups into larger ones when the overall network is
-large, making fine-grained structures invisible <span class="citation"
-data-cites="fortunato2007resolution">(Fortunato and Barthélemy
-2007)</span>.</p>
-<p>In future research, other nonlinear methods can be used to
-demonstrate the emergence and self-organizational characteristics of the
-network that add to the proven linear emergence and self-organization in
-this E-portfolio module.</p>
-<h2 id="conclusion">Conclusion</h2>
-<p>In this E-portfolio module, the rolling window correlation networks,
-community detection and complementary network metrics were used on the
-Yahoo finance dataset. Large, well-defined markets sectors emerge
-spontaneously when volatility is low, and these sectors autonomously
-fragment into tightly connected local pockets under stress. The alluvial
-plots (figure ... till ...) made the migration of individual stocks
-between clusters explicit, illustrating the self-organizing aspect of
-the market structure in response to crashes. Together, these findings
-provide a clear, illustration of emergence and self-organization, while
-also highlighting the importance of more nuanced, adaptive network
-approaches.</p>
+<h1 id="subsequent-analyses">Subsequent Analyses</h1>
+<p>Now that we have reconstructed the state‐space, we can apply a range
+of empirical dynamic modeling (EDM) tools to probe different aspects of
+the system’s behavior. For instance:</p>
+<ul>
+<li><p><strong>Simplex projection:</strong> Uses nearest‐neighbor
+forecasting in the reconstructed attractor to</p>
+<ul>
+<li><p>assess short‐term predictability</p></li>
+<li><p>validate the chosen embedding dimension.</p></li>
+</ul></li>
+<li><p><strong>S-Map:</strong> Fits locally weighted linear models at
+each point in state‐space to</p>
+<ul>
+<li><p>quantify the degree of nonlinearity</p></li>
+<li><p>extract time‐varying interaction coefficients.</p></li>
+</ul></li>
+<li><p><strong>Convergent Cross Mapping (CCM):</strong> Tests for causal
+coupling by checking whether the attractor reconstructed from one
+variable can reliably predict the states of another.</p></li>
+</ul>
+<h1 id="conclusion">Conclusion</h1>
+<p>In this module, we have demonstrated how to recover the hidden
+dynamics of a complex system from a single time series by means of
+phase–space reconstruction. Starting from Takens’ embedding theorem, we
+selected an appropriate time delay (<span
+class="math inline"><em>τ</em> = 33</span>) by comparing the
+autocorrelation function and average mutual information, and determined
+a minimal embedding dimension (<span
+class="math inline"><em>m</em> = 7</span>) using Cao’s method. With
+these parameters we reconstructed the Amazon closing‐price attractor and
+visualized its first three coordinates.</p>
+<p>Having reconstructed the state‐space, we are now equipped to apply a
+suite of empirical dynamic modeling tools, such as recurrence analysis,
+Lyapunov‐exponent estimation, simplex forecasting, S–Map, and convergent
+cross mapping. By transforming a single financial time series into a
+multidimensional portrait of the system, phase–space reconstruction
+opens the door to richer insights into market behavior and other complex
+systems.</p>
 <div id="refs" class="references csl-bib-body hanging-indent"
 data-entry-spacing="0" role="list">
-<div id="ref-blondel2008fast" class="csl-entry" role="listitem">
-Blondel, Vincent D., Jean-Loup Guillaume, Renaud Lambiotte, and Etienne
-Lefebvre. 2008. <span>“Fast Unfolding of Communities in Large
-Networks.”</span> <em>Journal of Statistical Mechanics: Theory and
-Experiment</em>, no. 10: P10008. <a
-href="https://doi.org/10.1088/1742-5468/2008/10/P10008">https://doi.org/10.1088/1742-5468/2008/10/P10008</a>.
-</div>
-<div id="ref-camazine2001self" class="csl-entry" role="listitem">
-Camazine, Steven, Jean-Louis Deneubourg, Nigel R. Franks, James Sneyd,
-Guy Theraulaz, and Eric Bonabeau. 2001. <em>Self-Organization in
-Biological Systems</em>. Princeton, NJ: Princeton University Press.
-</div>
-<div id="ref-fortunato2007resolution" class="csl-entry" role="listitem">
-Fortunato, Santo, and Marc Barthélemy. 2007. <span>“Resolution Limit in
-Community Detection.”</span> <em>Proceedings of the National Academy of
-Sciences</em> 104 (1): 36–41. <a
-href="https://doi.org/10.1073/pnas.0605965104">https://doi.org/10.1073/pnas.0605965104</a>.
-</div>
-<div id="ref-iveeaten3223times_massive_yahoo_finance_dataset"
-class="csl-entry" role="listitem">
-iveeaten3223times. 2019. <span>“Massive Yahoo Finance Dataset.”</span>
-Kaggle, <a
-href="https://www.kaggle.com/datasets/iveeaten3223times/massive-yahoo-finance-dataset"
-class="uri">https://www.kaggle.com/datasets/iveeaten3223times/massive-yahoo-finance-dataset</a>.
-</div>
-<div id="ref-mantegna1999hierarchical" class="csl-entry"
+<div id="ref-buckley2024seasonalstocks" class="csl-entry"
 role="listitem">
-Mantegna, Rosario N. 1999. <span>“Hierarchical Structure in Financial
-Markets.”</span> <em>The European Physical Journal B</em> 11 (1):
-193–97. <a
-href="https://doi.org/10.1007/s100510050929">https://doi.org/10.1007/s100510050929</a>.
+Buckley, Dan. 2024. <span>“<span>Seasonal Stocks</span>.”</span> March
+30, 2024. <a
+href="https://www.daytrading.com/seasonal-stocks">https://www.daytrading.com/seasonal-stocks</a>.
 </div>
-<div id="ref-onnela2003dynamics" class="csl-entry" role="listitem">
-Onnela, J.-P., A. Chakraborti, K. Kaski, and J. Kertész. 2003.
-<span>“Dynamics of Market Correlations: Taxonomy and Portfolio
-Analysis.”</span> <em>Physical Review E</em> 68: 056110. <a
-href="https://doi.org/10.1103/PhysRevE.68.056110">https://doi.org/10.1103/PhysRevE.68.056110</a>.
+<div id="ref-kennel1992determining" class="csl-entry" role="listitem">
+Kennel, Matthew B, Reggie Brown, and Henry DI Abarbanel. 1992.
+<span>“Determining Embedding Dimension for Phase-Space Reconstruction
+Using a Geometrical Construction.”</span> <em>Physical Review A</em> 45
+(6): 3403.
 </div>
-<div id="ref-sornette2003why" class="csl-entry" role="listitem">
-Sornette, Didier. 2003. <em>Why Stock Markets Crash: Critical Events in
-Complex Financial Systems</em>. Princeton, NJ: Princeton University
-Press.
+<div id="ref-rhodes1997false" class="csl-entry" role="listitem">
+Rhodes, Carl, and Manfred Morari. 1997. <span>“False-Nearest-Neighbors
+Algorithm and Noise-Corrupted Time Series.”</span> <em>Physical Review
+E</em> 55 (5): 6162.
 </div>
 </div>
 </body>
